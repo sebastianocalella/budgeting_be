@@ -1,9 +1,11 @@
-import express, { json } from "express";
-import cors from "cors";
-import expensesRoutes from "./src/routes/expenses.js";
-import mysql from "mysql2/promise";
+import express, { json } from 'express';
+import cors from 'cors';
+import expensesRoutes from './src/routes/expenses.js';
+import categoriesRoutes from './src/routes/categories.js';
+import mysql from 'mysql2/promise';
 import momentTimezone from 'moment-timezone';
 import dotenv from 'dotenv';
+
 
 dotenv.config();
 
@@ -35,6 +37,8 @@ app.get("/", (req, res) => {
 
 // Use the expense routes
 app.use("/expenses", expensesRoutes);
+
+app.use("/categories", categoriesRoutes);
 
 // Start the server
 const PORT = 3000;

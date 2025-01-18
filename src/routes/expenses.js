@@ -1,5 +1,5 @@
 import { Router } from "express";
-import db from "../../index.js";
+import db from "#root/index.js";
 import momentTimezone from 'moment-timezone';
 
 const router = Router();
