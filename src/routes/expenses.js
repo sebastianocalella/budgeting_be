@@ -7,31 +7,25 @@ const router = Router();
 // GET: Fetch expenses
 router.get("/", async (req, res) => {
   try {
-    const { year, month, day } = req.query;
+    const { start, end } = req.query;
     let query = "SELECT * FROM expenses";
     const params = [];
     const localTimezone = momentTimezone.tz.guess();
 
-    // Build base query without timezone conversion
+    // Handle start and end date filters
     const conditions = [];
-    const requestedDate = momentTimezone.tz(
-      `${year || '2024'}-${month || '01'}-${day || '01'}`, 
-      localTimezone
-    );
-
-    if (year) {
-      conditions.push("YEAR(date) = ?");
-      params.push(requestedDate.year());
+    if (start) {
+      const utcStart = momentTimezone.tz(start, localTimezone).utc().format("YYYY-MM-DD HH:mm:ss");
+      conditions.push("date >= ?");
+      params.push(utcStart);
     }
-    if (month) {
-      conditions.push("MONTH(date) = ?");
-      params.push(parseInt(month));
-    }
-    if(day) {
-      conditions.push("DAY(date) = ?");
-      params.push(parseInt(day));
+    if (end) {
+      const utcEnd = momentTimezone.tz(end, localTimezone).utc().format("YYYY-MM-DD HH:mm:ss");
+      conditions.push("date <= ?");
+      params.push(utcEnd);
     }
 
+    // Append conditions to the query
     if (conditions.length > 0) {
       query += " WHERE " + conditions.join(" AND ");
     }
@@ -39,16 +33,18 @@ router.get("/", async (req, res) => {
     query += " ORDER BY date DESC";
 
     const [rows] = await db.execute(query, params);
-    
+
     if (rows) {
       // Convert dates to local timezone in the results
-      const adjustedRows = rows.map(row => ({
+      const adjustedRows = rows.map((row) => ({
         ...row,
-        date: momentTimezone.tz(row.date, 'UTC').tz(localTimezone).format()
+        date: momentTimezone.tz(row.date, "UTC").tz(localTimezone).format(),
       }));
 
       res.json(adjustedRows);
-    } 
+    } else {
+      res.json([]);
+    }
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Failed to fetch expenses" });
